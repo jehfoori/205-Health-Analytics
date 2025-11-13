@@ -1,8 +1,38 @@
 import SwiftUI
 
 struct RootView: View {
+    @StateObject private var viewModel = StepCountViewModel()
     var body: some View {
         TabView {
+            NavigationView {
+                        VStack(spacing: 20) {
+                            Text(viewModel.statusMessage)
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            
+                            Text("\(viewModel.stepCount)")
+                                .font(.system(size: 48, weight: .bold, design: .rounded))
+                            
+                            Button(action: {
+                                viewModel.refreshStepCount()
+                            }) {
+                                Text("Refresh Steps")
+                                    .padding(.horizontal, 24)
+                                    .padding(.vertical, 12)
+                                    .background(Color.accentColor.opacity(0.1))
+                                    .cornerRadius(12)
+                            }
+                            
+                            Spacer()
+                        }
+                        .padding()
+                        .navigationTitle("Today's Steps")
+                        .onAppear {
+                            // Request HealthKit access once the view is on screen and app is active
+                            viewModel.requestHealthKitAccess()
+                        }
+                    }
             NavigationView {
                 DashboardView()
             }
