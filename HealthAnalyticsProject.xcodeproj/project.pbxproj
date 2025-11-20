@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		9DDE3B412ECEFDEE002820F3 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 9DDE3B402ECEFDEE002820F3 /* .gitignore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		9DB557432EB162E20013B496 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		9DB557352EB162E00013B496 /* HealthAnalyticsProject.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HealthAnalyticsProject.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9DB557422EB162E20013B496 /* HealthAnalyticsProjectTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HealthAnalyticsProjectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9DB5574C2EB162E20013B496 /* HealthAnalyticsProjectUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HealthAnalyticsProjectUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9DDE3B402ECEFDEE002820F3 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -88,6 +93,7 @@
 		9DB5572C2EB162E00013B496 = {
 			isa = PBXGroup;
 			children = (
+				9DDE3B402ECEFDEE002820F3 /* .gitignore */,
 				9DB557372EB162E00013B496 /* HealthAnalyticsProject */,
 				9DB557452EB162E20013B496 /* HealthAnalyticsProjectTests */,
 				9DB5574F2EB162E20013B496 /* HealthAnalyticsProjectUITests */,
@@ -225,6 +231,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9DDE3B412ECEFDEE002820F3 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -409,12 +416,14 @@
 				CODE_SIGN_ENTITLEMENTS = HealthAnalyticsProject/HealthAnalyticsProject.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 7XBH9L97JT;
+				DEVELOPMENT_TEAM = 9XSMVF34QX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HealthAnalyticsProject/Info.plist;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use heart rate, HRV, and sleep data to analyze stress patterns.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We may write annotations to Health data in the future.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We need continuous location to notify you when you haven't moved for an hour.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to detect when you've been sitting still for too long.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -426,7 +435,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = UCLA.com.Aaron.Zhao.HealthAnalyticsProject;
+				PRODUCT_BUNDLE_IDENTIFIER = UCLA.com.Jeffrey.Huang.HealthAnalyticsProject;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -446,12 +455,14 @@
 				CODE_SIGN_ENTITLEMENTS = HealthAnalyticsProject/HealthAnalyticsProject.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 7XBH9L97JT;
+				DEVELOPMENT_TEAM = 9XSMVF34QX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HealthAnalyticsProject/Info.plist;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use heart rate, HRV, and sleep data to analyze stress patterns.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We may write annotations to Health data in the future.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We need continuous location to notify you when you haven't moved for an hour.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to detect when you've been sitting still for too long.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -463,7 +474,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = UCLA.com.Aaron.Zhao.HealthAnalyticsProject;
+				PRODUCT_BUNDLE_IDENTIFIER = UCLA.com.Jeffrey.Huang.HealthAnalyticsProject;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

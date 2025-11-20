@@ -9,8 +9,9 @@
 import Foundation
 import CoreLocation
 import UserNotifications
+import Combine
 
-final class SedentaryLocationManager: NSObject, CLLocationManagerDelegate {
+final class SedentaryLocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     static let shared = SedentaryLocationManager()
 
     private let locationManager = CLLocationManager()
@@ -22,6 +23,8 @@ final class SedentaryLocationManager: NSObject, CLLocationManagerDelegate {
     private var lastSignificantLocation: CLLocation?
     private var isTracking = false
 
+    @Published var currentLocation: CLLocation?
+
     private override init() {
         super.init()
         locationManager.delegate = self
@@ -29,6 +32,7 @@ final class SedentaryLocationManager: NSObject, CLLocationManagerDelegate {
         locationManager.allowsBackgroundLocationUpdates = true
         locationManager.pausesLocationUpdatesAutomatically = true
     }
+
 
     // Call this once from your app to start tracking
     func start() {
@@ -83,6 +87,9 @@ final class SedentaryLocationManager: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let current = locations.last else { return }
 
+        // NEW: expose the latest location to SwiftUI
+        currentLocation = current
+
         if let last = lastSignificantLocation {
             let distance = current.distance(from: last)
 
@@ -99,6 +106,7 @@ final class SedentaryLocationManager: NSObject, CLLocationManagerDelegate {
             scheduleSedentaryNotification()
         }
     }
+
 
     // MARK: - Notification logic
 
