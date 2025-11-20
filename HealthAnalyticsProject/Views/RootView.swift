@@ -6,6 +6,7 @@ struct RootView: View {
     var body: some View {
         TabView {
             NavigationView {
+<<<<<<< Updated upstream
                         VStack(spacing: 20) {
                             CurrentLocationMapView()
                                 .frame(height: 250)   // adjust height to taste
@@ -32,6 +33,57 @@ struct RootView: View {
                             
                             Spacer()
                         }
+=======
+                VStack(spacing: 16) {
+                    Text(viewModel.statusMessage)
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+
+                    // Steps
+                    Text("\(viewModel.stepCount)")
+                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                    Text("Today’s steps")
+
+                    // HRV
+                    VStack(spacing: 4) {
+                        Text(viewModel.hrvDisplayText)
+                            .font(.title2.bold())
+                        Text("HRV (SDNN, ms)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.top, 8)
+
+                    // Latest heart rate
+                    VStack(spacing: 4) {
+                        Text(viewModel.heartRateDisplayText)
+                            .font(.title3.bold())
+                        Text("Most recent heart rate")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Latest location
+                    Text(viewModel.locationDisplayText)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 4)
+
+                    Button(action: {
+                        viewModel.refreshAll()   // this now pulls HRV + HR + location too
+                    }) {
+                        Text("Refresh Data Now")
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(Color.accentColor.opacity(0.1))
+                            .cornerRadius(12)
+                    }
+
+                    Spacer()
+                }
+
+>>>>>>> Stashed changes
                         .padding()
                         .navigationTitle("Today's Steps")
                         .onAppear {

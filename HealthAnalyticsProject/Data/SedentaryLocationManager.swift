@@ -18,10 +18,15 @@ final class SedentaryLocationManager: NSObject, CLLocationManagerDelegate, Obser
     private let sedentaryNotificationID = "sedentaryNotificationID"
 
     // How far the user has to move to be considered "not sedentary" (in meters)
-    private let movementThreshold: CLLocationDistance = 25
+    private let movementThreshold: CLLocationDistance = 10
 
     private var lastSignificantLocation: CLLocation?
     private var isTracking = false
+    
+    var lastKnownLocation: CLLocation? {
+            return lastSignificantLocation
+        }
+
 
     @Published var currentLocation: CLLocation?
 
@@ -53,7 +58,6 @@ final class SedentaryLocationManager: NSObject, CLLocationManagerDelegate, Obser
 
         case .authorizedAlways, .authorizedWhenInUse:
             startLocationUpdates()
-
         case .denied, .restricted:
             // In a real app you might show an in-app message guiding user to Settings
             break
@@ -122,7 +126,7 @@ final class SedentaryLocationManager: NSObject, CLLocationManagerDelegate, Obser
         content.sound = .default
 
         // Fire in 1 hour (3600 seconds) unless we cancel it first due to movement
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 3600, repeats: false)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
 
         let request = UNNotificationRequest(
             identifier: sedentaryNotificationID,
