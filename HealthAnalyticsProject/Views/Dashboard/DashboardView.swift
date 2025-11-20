@@ -10,7 +10,6 @@ struct DashboardView: View {
                     Text("Overview")
                         .foregroundColor(.secondary)
                 }
-
                 // physio (clickable)
                 NavigationLink {
                     PhysioDetailView()

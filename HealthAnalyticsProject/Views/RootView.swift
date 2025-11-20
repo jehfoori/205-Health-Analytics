@@ -7,6 +7,11 @@ struct RootView: View {
         TabView {
             NavigationView {
                         VStack(spacing: 20) {
+                            CurrentLocationMapView()
+                                .frame(height: 250)   // adjust height to taste
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .padding(.horizontal)
+                            
                             Text(viewModel.statusMessage)
                                 .font(.headline)
                                 .multilineTextAlignment(.center)
