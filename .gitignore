@@ -28,3 +28,5 @@ fastlane/test_output/
 *.log
 *.lock
 *.swp
+
+HealthAnalyticsProject.xcodeproj/project.pbxproj

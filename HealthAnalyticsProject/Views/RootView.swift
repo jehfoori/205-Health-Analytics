@@ -3,38 +3,19 @@ import SwiftUI
 struct RootView: View {
     @StateObject private var viewModel = StepCountViewModel()
     private let sedentaryLocationManager = SedentaryLocationManager.shared
+
     var body: some View {
         TabView {
+            // MARK: - Today Tab
             NavigationView {
-<<<<<<< Updated upstream
-                        VStack(spacing: 20) {
-                            CurrentLocationMapView()
-                                .frame(height: 250)   // adjust height to taste
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                                .padding(.horizontal)
-                            
-                            Text(viewModel.statusMessage)
-                                .font(.headline)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                            
-                            Text("\(viewModel.stepCount)")
-                                .font(.system(size: 48, weight: .bold, design: .rounded))
-                            
-                            Button(action: {
-                                viewModel.refreshStepCount()
-                            }) {
-                                Text("Refresh Steps")
-                                    .padding(.horizontal, 24)
-                                    .padding(.vertical, 12)
-                                    .background(Color.accentColor.opacity(0.1))
-                                    .cornerRadius(12)
-                            }
-                            
-                            Spacer()
-                        }
-=======
-                VStack(spacing: 16) {
+                VStack(spacing: 20) {
+                    // Map at the top
+                    CurrentLocationMapView()
+                        .frame(height: 250)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
+
+                    // Status
                     Text(viewModel.statusMessage)
                         .font(.headline)
                         .multilineTextAlignment(.center)
@@ -70,8 +51,9 @@ struct RootView: View {
                         .foregroundColor(.secondary)
                         .padding(.top, 4)
 
+                    // Refresh button
                     Button(action: {
-                        viewModel.refreshAll()   // this now pulls HRV + HR + location too
+                        viewModel.refreshAll()
                     }) {
                         Text("Refresh Data Now")
                             .padding(.horizontal, 24)
@@ -82,16 +64,19 @@ struct RootView: View {
 
                     Spacer()
                 }
+                .padding()
+                .navigationTitle("Today's Steps")
+                .onAppear {
+                    // Request HealthKit + start location tracking when this tab appears
+                    viewModel.requestHealthKitAccess()
+                    sedentaryLocationManager.start()
+                }
+            }
+            .tabItem {
+                Label("Today", systemImage: "figure.walk")
+            }
 
->>>>>>> Stashed changes
-                        .padding()
-                        .navigationTitle("Today's Steps")
-                        .onAppear {
-                            // Request HealthKit access once the view is on screen and app is active
-                            viewModel.requestHealthKitAccess()
-                            sedentaryLocationManager.start()
-                        }
-                    }
+            // MARK: - Dashboard Tab
             NavigationView {
                 DashboardView()
             }
@@ -99,6 +84,7 @@ struct RootView: View {
                 Label("Dashboard", systemImage: "square.grid.2x2")
             }
 
+            // MARK: - Associations Tab
             NavigationView {
                 AssociationsView()
             }
@@ -106,6 +92,7 @@ struct RootView: View {
                 Label("Associations", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
             }
 
+            // MARK: - Settings / Profile Tab
             NavigationView {
                 Text("Settings / Profile (mock)")
                     .navigationTitle("Settings")
