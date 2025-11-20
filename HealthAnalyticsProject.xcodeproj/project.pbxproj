@@ -29,9 +29,22 @@
 		9DB5574C2EB162E20013B496 /* HealthAnalyticsProjectUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HealthAnalyticsProjectUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		6E6436C22ECE953500FD8AD7 /* Exceptions for "HealthAnalyticsProject" folder in "HealthAnalyticsProject" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9DB557342EB162E00013B496 /* HealthAnalyticsProject */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9DB557372EB162E00013B496 /* HealthAnalyticsProject */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				6E6436C22ECE953500FD8AD7 /* Exceptions for "HealthAnalyticsProject" folder in "HealthAnalyticsProject" target */,
+			);
 			path = HealthAnalyticsProject;
 			sourceTree = "<group>";
 		};
@@ -399,6 +412,7 @@
 				DEVELOPMENT_TEAM = 7XBH9L97JT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HealthAnalyticsProject/Info.plist;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use heart rate, HRV, and sleep data to analyze stress patterns.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We may write annotations to Health data in the future.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -435,6 +449,7 @@
 				DEVELOPMENT_TEAM = 7XBH9L97JT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HealthAnalyticsProject/Info.plist;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use heart rate, HRV, and sleep data to analyze stress patterns.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We may write annotations to Health data in the future.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

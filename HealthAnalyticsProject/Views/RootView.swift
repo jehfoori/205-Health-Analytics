@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @StateObject private var viewModel = StepCountViewModel()
+    private let sedentaryLocationManager = SedentaryLocationManager.shared
     var body: some View {
         TabView {
             NavigationView {
@@ -31,6 +32,7 @@ struct RootView: View {
                         .onAppear {
                             // Request HealthKit access once the view is on screen and app is active
                             viewModel.requestHealthKitAccess()
+                            sedentaryLocationManager.start()
                         }
                     }
             NavigationView {

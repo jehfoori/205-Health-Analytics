@@ -10,7 +10,7 @@ final class StepCountViewModel: ObservableObject {
     private let healthKitManager = HealthKitManager.shared
     
     init() {
-        // Do NOT request authorization here; do it from the view's onAppear instead
+        
     }
     
     func requestHealthKitAccess() {
