@@ -26,17 +26,19 @@ final class HealthKitManager {
             return
         }
         
-        guard let stepType = HKObjectType.quantityType(forIdentifier: .stepCount) else {
+        guard let stepType = HKObjectType.quantityType(forIdentifier: .stepCount),
+              let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN),
+              let hrType  = HKObjectType.quantityType(forIdentifier: .heartRate) else {
             let error = NSError(
                 domain: "HealthKit",
                 code: 2,
-                userInfo: [NSLocalizedDescriptionKey: "Step Count type is unavailable."]
+                userInfo: [NSLocalizedDescriptionKey: "Required HealthKit types are unavailable."]
             )
             completion(false, error)
             return
         }
         
-        let readTypes: Set<HKObjectType> = [stepType]
+        let readTypes: Set<HKObjectType> = [stepType, hrvType, hrType]
         
         healthStore.requestAuthorization(toShare: nil, read: readTypes) { success, error in
             DispatchQueue.main.async {
@@ -44,6 +46,7 @@ final class HealthKitManager {
             }
         }
     }
+
     
     // Fetch today's total step count
     func fetchTodayStepCount(completion: @escaping (Double?, Error?) -> Void) {
@@ -88,4 +91,110 @@ final class HealthKitManager {
         
         healthStore.execute(query)
     }
+    // Fetch today's average HRV (SDNN) in milliseconds
+    func fetchTodayHRV(completion: @escaping (Double?, Error?) -> Void) {
+        guard let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
+            let error = NSError(
+                domain: "HealthKit",
+                code: 4,
+                userInfo: [NSLocalizedDescriptionKey: "HRV type is unavailable."]
+            )
+            completion(nil, error)
+            return
+        }
+        
+        let calendar = Calendar.current
+        let now = Date()
+        let eightDaysAgo = calendar.date(byAdding: .day, value: -8, to: now)!
+        let startOfDay = calendar.startOfDay(for: eightDaysAgo)
+        
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startOfDay,
+            end: now,
+            options: .strictStartDate
+        )
+        
+        let query = HKStatisticsQuery(
+            quantityType: hrvType,
+            quantitySamplePredicate: predicate,
+            options: .discreteAverage
+        ) { _, statistics, error in
+            
+            // 1) Explicitly treat "no data" as a non-error
+            if let hkError = error as? HKError, hkError.code == .errorNoData {
+                DispatchQueue.main.async {
+                    completion(nil, nil)   // means "no HRV today"
+                }
+                return
+            }
+            
+            // 2) Any other real error
+            if let error = error {
+                DispatchQueue.main.async {
+                    completion(nil, error)
+                }
+                return
+            }
+            
+            // 3) No error, but also no samples -> also "no data"
+            let unit = HKUnit.secondUnit(with: .milli)
+            let averageHRVms = statistics?.averageQuantity()?.doubleValue(for: unit)
+            
+            DispatchQueue.main.async {
+                // If averageHRVms is nil, we just send nil to mean "no data"
+                completion(averageHRVms, nil)
+            }
+        }
+        
+        healthStore.execute(query)
+    }
+    // Most recent heart rate sample (bpm) and its timestamp
+    func fetchMostRecentHeartRate(completion: @escaping (Double?, Date?, Error?) -> Void) {
+        guard let hrType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            let error = NSError(
+                domain: "HealthKit",
+                code: 5,
+                userInfo: [NSLocalizedDescriptionKey: "Heart rate type is unavailable."]
+            )
+            completion(nil, nil, error)
+            return
+        }
+
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let predicate = HKQuery.predicateForSamples(withStart: nil, end: Date(), options: [])
+
+        let query = HKSampleQuery(
+            sampleType: hrType,
+            predicate: predicate,
+            limit: 1,
+            sortDescriptors: [sort]
+        ) { _, samples, error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    completion(nil, nil, error)
+                }
+                return
+            }
+
+            guard let sample = samples?.first as? HKQuantitySample else {
+                // No HR data at all
+                DispatchQueue.main.async {
+                    completion(nil, nil, nil)
+                }
+                return
+            }
+
+            let unit = HKUnit.count().unitDivided(by: HKUnit.minute())
+            let bpm = sample.quantity.doubleValue(for: unit)
+            let timestamp = sample.startDate
+
+            DispatchQueue.main.async {
+                completion(bpm, timestamp, nil)
+            }
+        }
+
+        healthStore.execute(query)
+    }
+
+
 }

@@ -25,5 +25,13 @@ Podfile.lock
 fastlane/report.xml
 fastlane/test_output/
 
+<<<<<<< HEAD
 # IMPORTANT: Do NOT ignore .pbxproj.
 # It is the brain of your project.
+=======
+# Logs / misc
+*.log
+*.lock
+*.swp
+
+>>>>>>> 95ba5de7a71aae23f424482a04d1afb3ad0d2827
