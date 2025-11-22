@@ -1,30 +1,29 @@
 # macOS
 .DS_Store
 
-# Xcode build artifacts
+# Xcode
 build/
-DerivedData/
+*.derivedData
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
 
-# User-specific Xcode files
+# User Specific (The cause of your headache)
 xcuserdata/
 *.xcuserstate
 
 # Swift Package Manager
 .swiftpm/
-Packages/
+.build/
 
-# CocoaPods (if used)
+# CocoaPods
 Pods/
 Podfile.lock
-
-# Carthage (if used)
-Carthage/Build/
 
 # Fastlane
 fastlane/report.xml
 fastlane/test_output/
 
-# Logs / misc
-*.log
-*.lock
-*.swp
+# IMPORTANT: Do NOT ignore .pbxproj.
+# It is the brain of your project.
