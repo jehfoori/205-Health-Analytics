@@ -8,6 +8,7 @@
 import Foundation
 import CoreData
 import CoreLocation
+import Combine
 
 final class HeartRateLocationStore: ObservableObject {
     static let shared = HeartRateLocationStore()
