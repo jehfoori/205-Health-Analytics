@@ -2,9 +2,10 @@ import SwiftUI
 
 struct ActiveSessionView: View {
     @EnvironmentObject var sessionManager: SessionManager
-    // NEW: This allows us to close the screen programmatically
     @Environment(\.dismiss) var dismiss
+    
     @State private var showingAlert = false
+    @State private var showPostSession = false
         
     var body: some View {
         // Safely unwrap the optional activeZone
@@ -13,13 +14,9 @@ struct ActiveSessionView: View {
                 // 1. Header
                 VStack(spacing: 5) {
                     Text("EXPOSURE SESSION")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.secondary)
-                        .tracking(2)
+                        .font(.caption).fontWeight(.bold).foregroundColor(.secondary).tracking(2)
                     Text(zone.name)
-                        .font(.largeTitle)
-                        .fontWeight(.black)
+                        .font(.largeTitle).fontWeight(.black)
                 }
                 .padding(.top, 50)
                 
@@ -40,9 +37,7 @@ struct ActiveSessionView: View {
                     
                     Text("\(Int(sessionManager.currentHeartRate))")
                         .font(.system(size: 60, weight: .bold)) +
-                    Text(" BPM")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
+                    Text(" BPM").font(.title2).foregroundColor(.secondary)
                 }
                 
                 Spacer()
@@ -52,13 +47,9 @@ struct ActiveSessionView: View {
                     showingAlert = true
                 }) {
                     Text("End Session")
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.red)
-                        .cornerRadius(15)
+                        .font(.title3).fontWeight(.bold).foregroundColor(.white)
+                        .frame(maxWidth: .infinity).padding()
+                        .background(Color.red).cornerRadius(15)
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 30)
@@ -66,10 +57,20 @@ struct ActiveSessionView: View {
             // 5. Confirmation Alert
             .alert("End Session?", isPresented: $showingAlert) {
                 Button("Resume", role: .cancel) { }
-                Button("End & Save", role: .destructive) {
-                    // Stop the logic
+                Button("End & Review", role: .destructive) {
+                    // Stop the timer, but don't close view yet
                     sessionManager.stopSession(for: zone)
-                    // CRITICAL FIX: Close the screen
+                    // Open the review screen
+                    showPostSession = true
+                }
+            }
+            // 6. Post-Session Flow
+            .sheet(isPresented: $showPostSession) {
+                PostSessionView(zone: zone)
+            }
+            // 7. Safety: If manager clears zone, close this view
+            .onChange(of: sessionManager.activeZone) { newZone in
+                if newZone == nil {
                     dismiss()
                 }
             }

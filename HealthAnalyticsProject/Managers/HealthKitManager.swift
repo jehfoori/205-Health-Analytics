@@ -37,13 +37,43 @@ final class HealthKitManager {
             completion(false, error)
             return
         }
+        guard let restingType = HKObjectType.quantityType(forIdentifier: .restingHeartRate),
+              let dobType = HKObjectType.characteristicType(forIdentifier: .dateOfBirth) else {
+            // handle error
+            return
+        }
         
-        let readTypes: Set<HKObjectType> = [stepType, hrvType, hrType]
+        let readTypes: Set<HKObjectType> = [stepType, hrvType, hrType, restingType, dobType]
         
         healthStore.requestAuthorization(toShare: nil, read: readTypes) { success, error in
             DispatchQueue.main.async {
                 completion(success, error)
             }
+        }
+    }
+    
+    func fetchRestingHeartRate(completion: @escaping (Double?, Error?) -> Void) {
+        guard let type = HKObjectType.quantityType(forIdentifier: .restingHeartRate) else { return }
+        
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sort]) { _, samples, error in
+            guard let sample = samples?.first as? HKQuantitySample else {
+                DispatchQueue.main.async { completion(nil, error) }
+                return
+            }
+            let bpm = sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
+            DispatchQueue.main.async { completion(bpm, nil) }
+        }
+        healthStore.execute(query)
+    }
+    
+    func fetchUserAge(completion: @escaping (Int?, Error?) -> Void) {
+        do {
+            let components = try healthStore.dateOfBirthComponents()
+            let age = Calendar.current.dateComponents([.year], from: components.date!, to: Date()).year
+            DispatchQueue.main.async { completion(age, nil) }
+        } catch {
+            DispatchQueue.main.async { completion(nil, error) }
         }
     }
 

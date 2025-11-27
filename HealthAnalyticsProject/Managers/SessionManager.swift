@@ -7,8 +7,13 @@ class SessionManager: ObservableObject {
     @Published var currentRuntime: TimeInterval = 0
     @Published var currentHeartRate: Double = 0
     
-    // Data for the current session
-    private var hrReadings: [Double] = []
+    // Bio Data cache
+    @Published var restingHR: Double = 60.0 // Default fallback
+    @Published var userAge: Int = 25 // Default fallback
+    
+    // Data for the current session (MADE PUBLIC for PostSessionView)
+    var hrReadings: [Double] = []
+    
     private var startTime: Date?
     private var timer: Timer?
     private var isSimulationMode = true // Set to false when deploying to real device
@@ -19,6 +24,9 @@ class SessionManager: ObservableObject {
     
     // Start a session for a specific Zone
     func startSession() {
+        // 1. Fetch Bio Data immediately so it's ready for the end
+        fetchBioData()
+        
         isSessionActive = true
         startTime = Date()
         hrReadings = []
@@ -31,35 +39,12 @@ class SessionManager: ObservableObject {
     }
     
     func stopSession(for zone: ChallengeZone) {
-        isSessionActive = false
+        // We ONLY stop the timer here.
+        // We do NOT save to disk yet. The PostSessionView will handle that.
         timer?.invalidate()
         
-        guard let start = startTime else { return }
-        let totalTime = Date().timeIntervalSince(start)
-        
-        // Calculate stats
-        let peak = hrReadings.max() ?? 0
-        let low = hrReadings.min() ?? 0
-        let avg = hrReadings.isEmpty ? 0 : hrReadings.reduce(0, +) / Double(hrReadings.count)
-        
-        let newSession = ExposureSession(
-            id: UUID(),
-            zoneID: zone.id,
-            date: Date(),
-            duration: totalTime,
-            peakHR: peak,
-            lowestHR: low,
-            avgHR: avg,
-            stepCount: 0, // We will hook this up later
-            hrReadings: hrReadings
-        )
-        
-        print("SESSION SAVED: \(newSession)")
-        
-        // NEW: Persist to disk
-        DispatchQueue.main.async {
-            SessionDataStore.shared.addSession(newSession)
-        }
+        // Note: We keep isSessionActive = true until the PostView dismisses
+        // so the data doesn't get wiped before the user rates it.
     }
 
     private func tick() {
@@ -85,5 +70,30 @@ class SessionManager: ObservableObject {
                 }
             }
         }
+    }
+    
+    // Call this when app launches or session starts
+    func fetchBioData() {
+        healthManager.fetchRestingHeartRate { [weak self] bpm, _ in
+            if let bpm = bpm { self?.restingHR = bpm }
+        }
+        healthManager.fetchUserAge { [weak self] age, _ in
+            if let age = age { self?.userAge = age }
+        }
+    }
+    
+    // The "Medical" Calculation
+    func calculatePhysiologicalScore(peakBPM: Double) -> Double {
+        // Karvonen Formula: %Intensity = (Target - Resting) / (Max - Resting)
+        let maxHR = Double(220 - userAge)
+        let hrReserve = maxHR - restingHR
+        
+        if hrReserve <= 0 { return 0 } // Avoid division by zero safety
+        
+        let rise = peakBPM - restingHR
+        let intensity = (rise / hrReserve) * 100
+        
+        // Clamp result between 0 and 100
+        return min(max(intensity, 0), 100)
     }
 }

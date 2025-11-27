@@ -29,4 +29,11 @@ struct ExposureSession: Identifiable, Codable {
     
     // This is the graph data
     let hrReadings: [Double]
+    
+    // NEW: The "Reality Check" Metrics
+    var subjectiveRating: Double // 0-100 (SUDS)
+    var physiologicalScore: Double // 0-100 (Karvonen)
+    var discrepancy: Double { subjectiveRating - physiologicalScore }
+    
+    var journalNote: String? // "What safety behavior did I use?"
 }
