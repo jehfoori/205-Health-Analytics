@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 struct PostSessionView: View {
     @EnvironmentObject var sessionManager: SessionManager
@@ -11,13 +12,23 @@ struct PostSessionView: View {
     @State private var journalNote: String = ""
     @State private var showResults = false
     
+    // Help Sheets
+    @State private var showSUDSHelp = false
+    @State private var showGraphHelp = false
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
                 if !showResults {
-                    // PHASE 1: The Input
-                    Text("How intense was that?")
-                        .font(.title2.bold())
+                    // PHASE 1: The Input (Unchanged)
+                    HStack {
+                        Text("How intense was that?")
+                            .font(.title2.bold())
+                        Button(action: { showSUDSHelp = true }) {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.blue)
+                        }
+                    }
                     
                     Text("\(Int(subjectiveRating))/100")
                         .font(.system(size: 60, weight: .heavy))
@@ -27,35 +38,78 @@ struct PostSessionView: View {
                         .accentColor(colorForRating(subjectiveRating))
                         .padding()
                     
-                    Text("0 = Calm, 100 = Panic")
+                    Text("SUDS Score (Subjective Units of Distress)")
+                        .font(.caption)
                         .foregroundColor(.secondary)
                     
                     Spacer()
                     
-                    Button("See Reality Check") {
+                    Button("See Session Analysis") {
                         withAnimation { showResults = true }
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                     
                 } else {
-                    // PHASE 2: The Reveal
+                    // PHASE 2: The Analysis (UPDATED)
                     ScrollView {
                         VStack(spacing: 25) {
-                            // The "Discrepancy" Card
-                            RealityCheckCard(
-                                userRating: subjectiveRating,
-                                bodyScore: sessionManager.calculatePhysiologicalScore(peakBPM: sessionManager.hrReadings.max() ?? 0)
-                            )
+                            // 1. The Habituation Curve Graph
+                            VStack(alignment: .leading) {
+                                HStack {
+                                    Text("Habituation Curve")
+                                        .font(.headline)
+                                    Spacer()
+                                    Button(action: { showGraphHelp = true }) {
+                                        Image(systemName: "questionmark.circle")
+                                    }
+                                }
+                                
+                                Chart {
+                                    ForEach(Array(sessionManager.hrReadings.enumerated()), id: \.offset) { index, bpm in
+                                        LineMark(
+                                            x: .value("Time", index), // seconds
+                                            y: .value("BPM", bpm)
+                                        )
+                                        .foregroundStyle(Color.red.gradient)
+                                        .interpolationMethod(.catmullRom)
+                                    }
+                                }
+                                .frame(height: 200)
+                                .chartYScale(domain: .automatic(includesZero: false)) // Auto-scale Y axis
+                                
+                                Text("Did your anxiety drop over time?")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding()
+                            .background(Color(.systemBackground))
+                            .cornerRadius(12)
+                            .shadow(radius: 2)
                             
-                            // The Journal
+                            // 2. Metrics Summary
+                            HStack {
+                                StatBox(label: "Peak Body Score", value: "\(Int(sessionManager.calculatePhysiologicalScore(peakBPM: sessionManager.hrReadings.max() ?? 0)))")
+                                Divider()
+                                StatBox(label: "Peak SUDS", value: "\(Int(subjectiveRating))")
+                            }
+                            
+                            // 3. The Journal
                             VStack(alignment: .leading) {
                                 Text("Safety Behavior Check")
                                     .font(.headline)
-                                TextField("What did you do to feel safe? (e.g. held phone)", text: $journalNote)
+                                
+                                Text("What did you do to cope? (e.g. checked phone, held breath)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(.bottom, 4)
+                                
+                                TextField("I relied on...", text: $journalNote)
                                     .textFieldStyle(.roundedBorder)
                             }
                             .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(12)
                             
                             Button("Save Session") {
                                 saveAndExit()
@@ -68,17 +122,28 @@ struct PostSessionView: View {
                     }
                 }
             }
-            .navigationTitle(showResults ? "Session Summary" : "Check-in")
+            .navigationTitle(showResults ? "Session Analysis" : "Check-in")
             .toolbar {
-                // Prevent accidental dismissal without saving
                 ToolbarItem(placement: .cancellationAction) {
                     if showResults { EmptyView() } else { Button("Cancel") { dismiss() } }
                 }
             }
+            .alert("What is SUDS?", isPresented: $showSUDSHelp) {
+                Button("Got it", role: .cancel) {}
+            } message: {
+                Text("Subjective Units of Distress Scale (0-100) measures how intense your anxiety feels.\n0 = Calm, 100 = Panic.")
+            }
+            .alert("Understanding the Graph", isPresented: $showGraphHelp) {
+                Button("Got it", role: .cancel) {}
+            } message: {
+                Text("This graph shows your heart rate over the session. In successful exposure, you want to see the curve go DOWN over time (Habituation).")
+            }
         }
     }
     
-    // Helper: Save Logic
+    // ... (Keep saveAndExit and colorForRating exactly as they were) ...
+    // Copy-paste them from your previous file to ensure they exist
+    
     func saveAndExit() {
         let peak = sessionManager.hrReadings.max() ?? 0
         let avg = sessionManager.hrReadings.isEmpty ? 0 : sessionManager.hrReadings.reduce(0, +) / Double(sessionManager.hrReadings.count)
@@ -101,7 +166,6 @@ struct PostSessionView: View {
         
         SessionDataStore.shared.addSession(newSession)
         
-        // Reset Manager State
         sessionManager.activeZone = nil
         sessionManager.isSessionActive = false
         
@@ -110,65 +174,5 @@ struct PostSessionView: View {
     
     func colorForRating(_ val: Double) -> Color {
         return val > 70 ? .red : (val > 40 ? .orange : .blue)
-    }
-}
-
-// Comparison UI Component
-struct RealityCheckCard: View {
-    let userRating: Double
-    let bodyScore: Double
-    
-    var discrepancy: Double { userRating - bodyScore }
-    
-    var body: some View {
-        VStack(spacing: 15) {
-            Text("Reality Check")
-                .font(.headline)
-                .foregroundColor(.secondary)
-            
-            HStack(alignment: .bottom, spacing: 30) {
-                // Bar 1: Mind
-                VStack {
-                    Text("\(Int(userRating))")
-                        .bold()
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.red.opacity(0.8))
-                        .frame(width: 40, height: max(userRating * 1.5, 10))
-                    Text("Mind")
-                        .font(.caption)
-                }
-                
-                // Bar 2: Body
-                VStack {
-                    Text("\(Int(bodyScore))")
-                        .bold()
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.blue.opacity(0.8))
-                        .frame(width: 40, height: max(bodyScore * 1.5, 10))
-                    Text("Body")
-                        .font(.caption)
-                }
-            }
-            
-            Divider()
-            
-            if discrepancy > 10 {
-                Text("False Alarm Detected")
-                    .font(.title3.bold())
-                    .foregroundColor(.green)
-                Text("Your fear was **\(Int(discrepancy))%** higher than your actual danger.")
-                    .multilineTextAlignment(.center)
-                    .font(.subheadline)
-            } else {
-                Text("In Sync")
-                    .font(.title3.bold())
-                Text("Your perception matched your body.")
-                    .font(.subheadline)
-            }
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 5)
     }
 }

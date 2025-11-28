@@ -4,7 +4,7 @@ import MapKit
 struct ZoneMapView: View {
     @StateObject private var locationManager = LocationManager.shared
     @StateObject private var dataStore = ZoneDataStore.shared
-    @EnvironmentObject var sessionManager: SessionManager // Access the manager
+    @EnvironmentObject var sessionManager: SessionManager
     
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 34.0689, longitude: -118.4452),
@@ -14,18 +14,17 @@ struct ZoneMapView: View {
     @State private var isNamingZone = false
     @State private var newZoneName = ""
     
-    // NEW: State to track which zone is selected
     @State private var selectedZone: ChallengeZone?
     @State private var showSessionScreen = false
+    
+    // NEW: Info Sheet state
+    @State private var showInfoSheet = false
     
     var body: some View {
         ZStack {
             Map(coordinateRegion: $region, showsUserLocation: true, annotationItems: dataStore.zones) { zone in
                 MapAnnotation(coordinate: zone.coordinate) {
-                    // Make the pin clickable
-                    Button(action: {
-                        selectedZone = zone
-                    }) {
+                    Button(action: { selectedZone = zone }) {
                         VStack {
                             Image(systemName: "mappin.circle.fill")
                                 .resizable()
@@ -43,9 +42,7 @@ struct ZoneMapView: View {
             }
             .ignoresSafeArea()
             
-            // ... (Keep the "Targeting" Pin and "Add Zone" logic exactly the same) ...
-            // (Copy the previous VStack/Controls logic here)
-            // For brevity, I'm assuming you keep the existing UI code for the targeting pin/buttons
+            // Targeting Pin
             VStack {
                 Spacer()
                 Image(systemName: "plus.viewfinder")
@@ -56,8 +53,25 @@ struct ZoneMapView: View {
             }
             .allowsHitTesting(false)
             
+            // Controls Overlay
             VStack {
+                // NEW: Header with Info Button
+                HStack {
+                    Spacer()
+                    Button(action: { showInfoSheet = true }) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.title)
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Color.black.opacity(0.6))
+                            .clipShape(Circle())
+                    }
+                    .padding(.top, 50)
+                    .padding(.trailing)
+                }
+                
                 Spacer()
+                
                 HStack {
                     Button(action: {
                         if let loc = locationManager.currentLocation {
@@ -70,10 +84,17 @@ struct ZoneMapView: View {
                             .clipShape(Circle())
                             .shadow(radius: 4)
                     }
+                    
                     Spacer()
+                    
                     Button(action: { isNamingZone = true }) {
                         Text("Add Zone Here")
-                            .bold() .padding() .background(Color.blue) .foregroundColor(.white) .cornerRadius(10) .shadow(radius: 4)
+                            .bold()
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            .shadow(radius: 4)
                     }
                 }
                 .padding()
@@ -89,24 +110,16 @@ struct ZoneMapView: View {
             }
             Button("Cancel", role: .cancel) { }
         }
-        // ... inside ZoneMapView body ...
-        
-        // 1. The Sheet (Pre-flight check)
         .sheet(item: $selectedZone) { zone in
             VStack(spacing: 20) {
                 Text(zone.name).font(.title).bold()
-                Text("Are you ready to start exposure therapy here?")
+                Text("Ready to face this fear?")
                     .multilineTextAlignment(.center)
-                    .padding()
                 
-                Button("Start Session") {
-                    // CRITICAL STEP: Tell the manager WHICH zone we are doing
+                Button("Start Exposure Session") {
                     sessionManager.activeZone = zone
                     sessionManager.startSession()
-                    
-                    // Close the sheet
                     selectedZone = nil
-                    // Open the full screen cover
                     showSessionScreen = true
                 }
                 .buttonStyle(.borderedProminent)
@@ -114,10 +127,35 @@ struct ZoneMapView: View {
             }
             .presentationDetents([.medium])
         }
-        // 2. The Full Screen Cover (The Workout)
         .fullScreenCover(isPresented: $showSessionScreen) {
-            // ERROR FIX: Do not pass arguments here.
             ActiveSessionView()
+        }
+        // NEW: The Psychoeducation Sheet
+        .sheet(isPresented: $showInfoSheet) {
+            VStack(spacing: 20) {
+                Text("How Exposure Therapy Works")
+                    .font(.title2.bold())
+                    .padding(.top)
+                
+                VStack(alignment: .leading, spacing: 15) {
+                    HStack(alignment: .top) {
+                        Image(systemName: "chart.line.downtrend.xyaxis")
+                            .foregroundColor(.blue)
+                        Text("**Habituation:** If you stay in a scary situation long enough without leaving, your anxiety will eventually go down naturally.")
+                    }
+                    
+                    HStack(alignment: .top) {
+                        Image(systemName: "brain.head.profile")
+                            .foregroundColor(.purple)
+                        Text("**Retraining:** This app helps you prove to your brain that these places are safe, even if they feel uncomfortable.")
+                    }
+                }
+                .padding()
+                
+                Button("Got it") { showInfoSheet = false }
+                    .buttonStyle(.bordered)
+            }
+            .presentationDetents([.medium])
         }
     }
 }

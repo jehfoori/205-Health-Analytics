@@ -9,9 +9,12 @@ struct RootView: View {
                 .environmentObject(sessionManager)
                 .tabItem { Label("Explore", systemImage: "map") }
             
-            // REPLACE THE PLACEHOLDER WITH THIS:
             HistoryView()
                 .tabItem { Label("History", systemImage: "list.bullet") }
+            
+            // NEW TAB
+            LearningView()
+                .tabItem { Label("Learn", systemImage: "book.fill") }
         }
     }
 }

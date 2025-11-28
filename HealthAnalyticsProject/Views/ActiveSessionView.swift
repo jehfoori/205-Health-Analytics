@@ -8,77 +8,78 @@ struct ActiveSessionView: View {
     @State private var showPostSession = false
         
     var body: some View {
-        // Safely unwrap the optional activeZone
+        // Changed logic: We unwrap zone, but if it's nil, we check if we are "closing"
         if let zone = sessionManager.activeZone {
-            VStack(spacing: 30) {
-                // 1. Header
-                VStack(spacing: 5) {
-                    Text("EXPOSURE SESSION")
-                        .font(.caption).fontWeight(.bold).foregroundColor(.secondary).tracking(2)
-                    Text(zone.name)
-                        .font(.largeTitle).fontWeight(.black)
-                }
-                .padding(.top, 50)
-                
-                Spacer()
-                
-                // 2. Big Timer
-                Text(formatDuration(sessionManager.currentRuntime))
-                    .font(.system(size: 70, weight: .thin, design: .monospaced))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                
-                // 3. Heart Rate Visualizer
-                VStack {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 60))
-                        .foregroundColor(.red)
-                        // Animation note: scaleEffect based on phase can go here later
-                    
-                    Text("\(Int(sessionManager.currentHeartRate))")
-                        .font(.system(size: 60, weight: .bold)) +
-                    Text(" BPM").font(.title2).foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                // 4. Stop Button
-                Button(action: {
-                    showingAlert = true
-                }) {
-                    Text("End Session")
-                        .font(.title3).fontWeight(.bold).foregroundColor(.white)
-                        .frame(maxWidth: .infinity).padding()
-                        .background(Color.red).cornerRadius(15)
-                }
-                .padding(.horizontal)
-                .padding(.bottom, 30)
-            }
-            // 5. Confirmation Alert
-            .alert("End Session?", isPresented: $showingAlert) {
-                Button("Resume", role: .cancel) { }
-                Button("End & Review", role: .destructive) {
-                    // Stop the timer, but don't close view yet
-                    sessionManager.stopSession(for: zone)
-                    // Open the review screen
-                    showPostSession = true
-                }
-            }
-            // 6. Post-Session Flow
-            .sheet(isPresented: $showPostSession) {
-                PostSessionView(zone: zone)
-            }
-            // 7. Safety: If manager clears zone, close this view
-            .onChange(of: sessionManager.activeZone) { newZone in
-                if newZone == nil {
-                    dismiss()
-                }
-            }
+            content(for: zone)
         } else {
-            // Fallback if something went wrong with state
+            // If zone is nil, it means we just finished.
+            // Show nothing (or a spinner) while the view dismisses.
+            Color.clear.onAppear {
+                dismiss()
+            }
+        }
+    }
+    
+    // Moved the main UI into a helper function to keep the body clean
+    func content(for zone: ChallengeZone) -> some View {
+        VStack(spacing: 30) {
+            // 1. Header
+            VStack(spacing: 5) {
+                Text("EXPOSURE SESSION")
+                    .font(.caption).fontWeight(.bold).foregroundColor(.secondary).tracking(2)
+                Text(zone.name)
+                    .font(.largeTitle).fontWeight(.black)
+            }
+            .padding(.top, 50)
+            
+            Spacer()
+            
+            // 2. Big Timer
+            Text(formatDuration(sessionManager.currentRuntime))
+                .font(.system(size: 70, weight: .thin, design: .monospaced))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+            
+            // 3. Heart Rate Visualizer
             VStack {
-                Text("No Active Zone Selected")
-                Button("Close") { dismiss() }
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.red)
+                
+                Text("\(Int(sessionManager.currentHeartRate))")
+                    .font(.system(size: 60, weight: .bold)) +
+                Text(" BPM").font(.title2).foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            // 4. Stop Button
+            Button(action: {
+                showingAlert = true
+            }) {
+                Text("End Session")
+                    .font(.title3).fontWeight(.bold).foregroundColor(.white)
+                    .frame(maxWidth: .infinity).padding()
+                    .background(Color.red).cornerRadius(15)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 30)
+        }
+        .alert("End Session?", isPresented: $showingAlert) {
+            Button("Resume", role: .cancel) { }
+            Button("End & Review", role: .destructive) {
+                sessionManager.stopSession(for: zone)
+                showPostSession = true
+            }
+        }
+        .sheet(isPresented: $showPostSession) {
+            PostSessionView(zone: zone)
+        }
+        // If the manager clears the zone (from PostView), this view will re-render,
+        // hit the 'else' block (Color.clear), and call dismiss().
+        .onChange(of: sessionManager.activeZone) { newZone in
+            if newZone == nil {
+                dismiss()
             }
         }
     }
