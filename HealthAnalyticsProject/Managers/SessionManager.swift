@@ -1,99 +1,157 @@
 import Foundation
 import Combine
 import CoreLocation
+import SwiftUI
 
+@MainActor
 class SessionManager: ObservableObject {
+    static let shared = SessionManager()
+    
     @Published var isSessionActive = false
     @Published var currentRuntime: TimeInterval = 0
     @Published var currentHeartRate: Double = 0
     
     // Bio Data cache
-    @Published var restingHR: Double = 60.0 // Default fallback
-    @Published var userAge: Int = 25 // Default fallback
+    @Published var restingHR: Double = 60.0
+    @Published var userAge: Int = 25
     
-    // Data for the current session (MADE PUBLIC for PostSessionView)
+    // Data for the current session
     var hrReadings: [Double] = []
     
     private var startTime: Date?
     private var timer: Timer?
-    private var isSimulationMode = true // Set to false when deploying to real device
+    
+    // Track the timestamp of the last sample we successfully read
+    private var lastSampleDate: Date?
+    
+    // MARK: - DEMO MODE SWITCH
+    // Set this to TRUE for your presentation.
+    // It generates realistic, "Cinematic" data so you can show off the features safely.
+    // Set to FALSE to attempt reading from the real Watch.
+    @Published var isSimulationMode = true
     
     var activeZone: ChallengeZone?
-    
     private let healthManager = HealthKitManager.shared
     
-    // Start a session for a specific Zone
-    func startSession() {
-        // 1. Fetch Bio Data immediately so it's ready for the end
-        fetchBioData()
-        
-        isSessionActive = true
-        startTime = Date()
-        hrReadings = []
-        currentRuntime = 0
-        
-        // Start the timer to update UI every second
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.tick()
+    // MARK: - Setup
+    func requestPermissions() {
+        // Even in simulation mode, we ask for permissions so the flow looks real
+        print("Requesting HealthKit permissions...")
+        healthManager.requestAuthorization { [weak self] success, error in
+            if success {
+                print("HK Permissions Granted.")
+                self?.fetchBioData()
+            }
         }
     }
     
-    func stopSession(for zone: ChallengeZone) {
-        // We ONLY stop the timer here.
-        // We do NOT save to disk yet. The PostSessionView will handle that.
-        timer?.invalidate()
+    // MARK: - Session Control
+    func startSession() {
+        print("Starting session flow (Simulation: \(isSimulationMode))...")
+        self.startTimerLoop()
         
-        // Note: We keep isSessionActive = true until the PostView dismisses
-        // so the data doesn't get wiped before the user rates it.
-    }
-
-    private func tick() {
-        guard let start = startTime else { return }
-        currentRuntime = Date().timeIntervalSince(start)
-        
-        if isSimulationMode {
-            // SIMULATOR MODE: Generate fake anxiety curve
-            // Fluctuate between 100 and 130 BPM
-            let fakeHR = Double.random(in: 100...130)
-            DispatchQueue.main.async {
-                self.currentHeartRate = fakeHR
-                self.hrReadings.append(fakeHR)
-            }
-        } else {
-            // REAL DEVICE MODE: Fetch from HealthKit
-            healthManager.fetchMostRecentHeartRate { [weak self] bpm, _, _ in
-                guard let self = self, let bpm = bpm else { return }
-                
-                DispatchQueue.main.async {
-                    self.currentHeartRate = bpm
-                    self.hrReadings.append(bpm)
+        // If we are using real data, start the observer
+        if !isSimulationMode {
+            healthManager.startObservingHeartRate { [weak self] in
+                Task { @MainActor in
+                    self?.fetchRealHeartRate()
                 }
             }
         }
     }
     
-    // Call this when app launches or session starts
-    func fetchBioData() {
-        healthManager.fetchRestingHeartRate { [weak self] bpm, _ in
-            if let bpm = bpm { self?.restingHR = bpm }
+    func stopSession(for zone: ChallengeZone) {
+        timer?.invalidate()
+        timer = nil
+        if !isSimulationMode {
+            healthManager.stopObservingHeartRate()
         }
-        healthManager.fetchUserAge { [weak self] age, _ in
-            if let age = age { self?.userAge = age }
+    }
+
+    private func startTimerLoop() {
+        Task { @MainActor in
+            self.isSessionActive = true
+            self.startTime = Date()
+            self.hrReadings = []
+            self.currentRuntime = 0
+            self.lastSampleDate = nil
+            
+            self.timer?.invalidate()
+            
+            let newTimer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
+                self?.tick()
+            }
+            RunLoop.current.add(newTimer, forMode: .common)
+            self.timer = newTimer
         }
     }
     
-    // The "Medical" Calculation
+    private func tick() {
+        guard let start = startTime else { return }
+        currentRuntime = Date().timeIntervalSince(start)
+        
+        if isSimulationMode {
+            generateCinematicData()
+        } else {
+            fetchRealHeartRate()
+        }
+    }
+    
+    private func fetchRealHeartRate() {
+        healthManager.fetchMostRecentHeartRate { [weak self] bpm, sampleDate, error in
+            guard let self = self else { return }
+            if let error = error { return }
+            
+            Task { @MainActor in
+                guard let bpm = bpm, let sampleDate = sampleDate else { return }
+                
+                // Duplicate/Stale check
+                if let lastDate = self.lastSampleDate, lastDate == sampleDate {
+                    return
+                }
+                
+                print("HK FRESH DATA: \(Int(bpm)) BPM")
+                self.lastSampleDate = sampleDate
+                self.currentHeartRate = bpm
+                self.hrReadings.append(bpm)
+            }
+        }
+    }
+    
+    // MARK: - Demo Data Logic
+    private func generateCinematicData() {
+        let demoHR: Double
+        
+        switch currentRuntime {
+        case 0..<20:
+            demoHR = 80 + (currentRuntime * Double.random(in: 0...5)) // Rises to ~120
+        case 20..<50:
+            demoHR = 130 + Double.random(in: -5...5) // Spikes around 130
+        case 50..<80:
+            let progress = (currentRuntime - 50) / 30.0
+            demoHR = 130 - (40 * progress) // Drops back down
+        default:
+            demoHR = 90 + Double.random(in: -3...3) // Steady state
+        }
+        
+        self.currentHeartRate = demoHR
+        self.hrReadings.append(demoHR)
+    }
+    
+    func fetchBioData() {
+        healthManager.fetchRestingHeartRate { [weak self] bpm, _ in
+            if let bpm = bpm { Task { @MainActor in self?.restingHR = bpm } }
+        }
+        healthManager.fetchUserAge { [weak self] age, _ in
+            if let age = age { Task { @MainActor in self?.userAge = age } }
+        }
+    }
+    
     func calculatePhysiologicalScore(peakBPM: Double) -> Double {
-        // Karvonen Formula: %Intensity = (Target - Resting) / (Max - Resting)
         let maxHR = Double(220 - userAge)
         let hrReserve = maxHR - restingHR
-        
-        if hrReserve <= 0 { return 0 } // Avoid division by zero safety
-        
+        if hrReserve <= 0 { return 0 }
         let rise = peakBPM - restingHR
-        let intensity = (rise / hrReserve) * 100
-        
-        // Clamp result between 0 and 100
-        return min(max(intensity, 0), 100)
+        return min(max((rise / hrReserve) * 100, 0), 100)
     }
 }

@@ -15,9 +15,9 @@ struct LearningView: View {
                         
                         **Tactics and Specifics**
                         One of the key issues targeted by CBT is anxiety of different forms. Anxiety is characterized by negative thought patterns and destructive behaviors that impact quality of life. Tactics to treat anxiety include but are not limited to:
-                                                • Journaling - organizing negative thoughts, and writing down positive ones, can help process emotions and avoid feeling overwhelemd.
-                                                • Breath exercises - controlled breathing and other meditative practices help calm the mind by reducing the body's stress response
-                                                • Exposure - Facing fear in a controlled manner can reduce the magnitude of response over time
+                            • Journaling - organizing negative thoughts, and writing down positive ones, can help process emotions and avoid feeling overwhelemd.
+                            • Breath exercises - controlled breathing and other meditative practices help calm the mind by reducing the body's stress response
+                            • Exposure - Facing fear in a controlled manner can reduce the magnitude of response over time
                         
                         
                         **Where Our App Fits**
@@ -55,11 +55,11 @@ struct LearningView: View {
                         We have you rate your experiences using subjective units of distress, or SUDS. It is a standard scale used by therapists to measure the intensity of distress. It helps you and your therapist track your progress over time. Basically, it's a self reported score on how comfortable or uncomfortable you **felt**.
                         
                         **The Scale:**
-                                                • **0**: Totally relaxed / No distress
-                                                • **25**: Mild anxiety
-                                                • **50**: Uncomfortable but manageable
-                                                • **75**: Severe anxiety
-                                                • **100**: Highest anxiety imaginable / Panic
+                            • **0**: Totally relaxed / No distress
+                            • **25**: Mild anxiety
+                            • **50**: Uncomfortable but manageable
+                            • **75**: Severe anxiety
+                            • **100**: Highest anxiety imaginable / Panic
                         """
                     )) {
                         Label("Mental Stress", systemImage: "chart.bar")
@@ -73,7 +73,7 @@ struct LearningView: View {
                         We calculate your "Physiological Stress" using the **Karvonen Formula**, which measures how much of your "Heart Rate Reserve" (HRR) you are currently using.
                         
                         **The Formula:**
-                        `Intensity = (CHR - RHR) / (MHR - RHR)`
+                        Intensity = (Current HR - Resting HR) / (Maximum HR - Resting HR)
                         
                         **What it means:**
                         This scores simply contextualizes your current heart rate (CHR) within the range of your resting (RHR) and maximum (MHR) heart rates. A score of 50 indicates mild arousal, whether you're nervous, excited, or on a moderate jog. Higher scores indicate higher states of physiological stress: during anxiety monitoring, panicked behavior and nervousness can cause this score to jump up. Our app helps track and contextualize these moments for you.
