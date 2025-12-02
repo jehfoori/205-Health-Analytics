@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import CoreLocation
 
 struct ZoneMapView: View {
     @StateObject private var locationManager = LocationManager.shared
@@ -19,6 +20,31 @@ struct ZoneMapView: View {
     
     // NEW: Info Sheet state
     @State private var showInfoSheet = false
+    
+    private let allowedRadiusMeters: CLLocationDistance = 0.2 * 1609.34  // ~321.9 m
+
+    private func isWithinAllowedRadius(of zone: ChallengeZone) -> Bool {
+        guard let userLocation = locationManager.currentLocation else {
+            return false
+        }
+
+        let zoneLocation = CLLocation(latitude: zone.latitude,
+                                      longitude: zone.longitude)
+        let distance = userLocation.distance(from: zoneLocation) // meters
+        return distance <= allowedRadiusMeters
+    }
+
+    private func distanceToZoneMiles(_ zone: ChallengeZone) -> Double? {
+        guard let userLocation = locationManager.currentLocation else {
+            return nil
+        }
+
+        let zoneLocation = CLLocation(latitude: zone.latitude,
+                                      longitude: zone.longitude)
+        let distanceMeters = userLocation.distance(from: zoneLocation)
+        return distanceMeters / 1609.34   // meters → miles
+    }
+
     
     var body: some View {
         ZStack {
@@ -113,20 +139,48 @@ struct ZoneMapView: View {
         .sheet(item: $selectedZone) { zone in
             VStack(spacing: 20) {
                 Text(zone.name).font(.title).bold()
-                Text("Ready to face this fear?")
+                Text("Ready for the session?")
                     .multilineTextAlignment(.center)
-                
-                Button("Start Exposure Session") {
+
+                Button {
+                    // Start Exposure Session
                     sessionManager.activeZone = zone
                     sessionManager.startSession()
                     selectedZone = nil
                     showSessionScreen = true
+                } label: {
+                    VStack(spacing: 4) {
+                        Text(isWithinAllowedRadius(of: zone)
+                             ? "Start Exposure Here"
+                             : "Move closer to this zone")
+                            .font(.headline)
+
+                        if let distanceMiles = distanceToZoneMiles(zone) {
+                            Text(String(format: "%.2f miles from zone", distanceMiles))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        } else {
+                            Text("Waiting for GPS…")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
                 }
+                .disabled(!isWithinAllowedRadius(of: zone))
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+                Button(role: .destructive) {
+                            dataStore.deleteZone(zone)   // cascades: deletes sessions too
+                            selectedZone = nil
+                        } label: {
+                            Label("Delete this location", systemImage: "trash")
+                        }
+                        .padding(.top, 8)
+                        
             }
             .presentationDetents([.medium])
         }
+
         .fullScreenCover(isPresented: $showSessionScreen) {
             ActiveSessionView()
         }

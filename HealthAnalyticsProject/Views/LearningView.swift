@@ -62,7 +62,7 @@ struct LearningView: View {
                             • **100**: Highest anxiety imaginable / Panic
                         """
                     )) {
-                        Label("Mental Stress", systemImage: "chart.bar")
+                        Label("Mental Stress (Mind)", systemImage: "chart.bar")
                     }
                     
                     NavigationLink(destination: LearningDetailView(
@@ -79,7 +79,7 @@ struct LearningView: View {
                         This scores simply contextualizes your current heart rate (CHR) within the range of your resting (RHR) and maximum (MHR) heart rates. A score of 50 indicates mild arousal, whether you're nervous, excited, or on a moderate jog. Higher scores indicate higher states of physiological stress: during anxiety monitoring, panicked behavior and nervousness can cause this score to jump up. Our app helps track and contextualize these moments for you.
                         """
                     )) {
-                        Label("Physiological Stress", systemImage: "heart")
+                        Label("Physiological Stress (Body)", systemImage: "heart")
                     }
                     
                     // REPLACED SECTION: Focus on Progress/Habituation instead of Mind vs Body

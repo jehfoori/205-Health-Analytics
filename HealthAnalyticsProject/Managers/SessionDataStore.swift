@@ -17,11 +17,22 @@ class SessionDataStore: ObservableObject {
         sessions.append(session)
         saveSessions()
     }
+    func deleteSession(_ session: ExposureSession) {
+        // Remove any session with the same id
+        sessions.removeAll { $0.id == session.id }
+        saveSessions()
+    }
+
     
     // Helper: Get all sessions for a specific zone (e.g., "Grocery Store")
     func sessions(for zoneID: UUID) -> [ExposureSession] {
         return sessions.filter { $0.zoneID == zoneID }.sorted(by: { $0.date > $1.date })
     }
+    func deleteSessions(for zoneID: UUID) {
+        sessions.removeAll { $0.zoneID == zoneID }
+        saveSessions()
+    }
+
     
     // MARK: - Persistence
     private func saveSessions() {

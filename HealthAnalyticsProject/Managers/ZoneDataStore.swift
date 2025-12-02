@@ -35,9 +35,26 @@ class ZoneDataStore: ObservableObject {
     }
     
     func deleteZone(at offsets: IndexSet) {
-        zones.remove(atOffsets: offsets)
-        saveZones()
-    }
+            let sessionStore = SessionDataStore.shared
+            
+            // For each index, delete sessions tied to that zone, then remove the zone
+            for index in offsets {
+                let zone = zones[index]
+                sessionStore.deleteSessions(for: zone.id)
+            }
+            
+            zones.remove(atOffsets: offsets)
+            saveZones()
+        }
+        
+        /// Convenience: delete a specific zone instance (used by ZoneMapView button)
+        func deleteZone(_ zone: ChallengeZone) {
+            let sessionStore = SessionDataStore.shared
+            
+            sessionStore.deleteSessions(for: zone.id)
+            zones.removeAll { $0.id == zone.id }
+            saveZones()
+        }
     
     // MARK: - Persistence Logic
     

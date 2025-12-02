@@ -1,6 +1,10 @@
 import SwiftUI
 import Charts
 
+func colorForRating(_ val: Double) -> Color {
+    return val > 70 ? .red : (val > 40 ? .orange : .blue)
+}
+
 struct HistoryView: View {
     @StateObject private var zoneStore = ZoneDataStore.shared
     @StateObject private var sessionStore = SessionDataStore.shared
@@ -12,12 +16,13 @@ struct HistoryView: View {
                     VStack(spacing: 10) {
                         Text("No zones added yet.")
                             .font(.headline)
-                        Text("Go to the Map tab to start your journey.")
+                        Text("Go to the Explore tab to start your journey.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                     .padding()
                 } else {
+                    // Wrap the ForEach so we can attach .onDelete to it
                     ForEach(zoneStore.zones) { zone in
                         NavigationLink(destination: ZoneDetailView(zone: zone)) {
                             HStack {
@@ -32,13 +37,31 @@ struct HistoryView: View {
                             }
                             .padding(.vertical, 4)
                         }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    // find the index and reuse your existing deleteZone(at:)
+                                    if let index = zoneStore.zones.firstIndex(where: { $0.id == zone.id }) {
+                                        zoneStore.deleteZone(at: IndexSet(integer: index))
+                                    }
+                                } label: {
+                                    Image(systemName: "trash")    // 👈 icon-only
+                                }
+                            }
                     }
+                    // This enables swipe-to-delete & Edit mode delete for zones
+                    .onDelete(perform: zoneStore.deleteZone)
+                    
                 }
             }
             .navigationTitle("Your Progress")
+            .toolbar {
+                // Optional: standard Edit button to show delete controls
+                EditButton()
+            }
         }
     }
 }
+
 
 // The Details: A list of every time you visited this zone
 struct ZoneDetailView: View {
@@ -66,7 +89,11 @@ struct ZoneDetailView: View {
                             .foregroundStyle(.red)
                             .symbol(by: .value("Metric", "Body Score"))
                         }
-                    }
+                        
+                    }.chartForegroundStyleScale([
+                        "Mind (SUDS)" : Color.blue,
+                        "Body Score"  : Color.red
+                    ])
                     .frame(height: 200)
                     .padding(.vertical)
                 } else {
@@ -77,7 +104,7 @@ struct ZoneDetailView: View {
             }
             
             // Section 2: The Log
-            Section(header: Text("Session Log")) {
+            Section(header: Text("History")) {
                 if history.isEmpty {
                     Text("No sessions recorded here yet.")
                         .foregroundColor(.secondary)
@@ -86,6 +113,13 @@ struct ZoneDetailView: View {
                         NavigationLink(destination: SessionDetailView(session: session)) {
                             SessionRow(session: session)
                                 .padding(.vertical, 4)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                sessionStore.deleteSession(session)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
                     }
                 }
@@ -126,20 +160,20 @@ struct SessionRow: View {
             HStack(spacing: 12) {
                 HStack(spacing: 4) {
                     Image(systemName: "brain.head.profile")
-                    Text("Mind: \(Int(session.subjectiveRating))")
+                    Text("Mind Score: \(Int(session.subjectiveRating))") 
                 }
                 .font(.caption)
                 .foregroundColor(colorForRating(session.subjectiveRating))
                 
                 HStack(spacing: 4) {
                     Image(systemName: "heart.fill")
-                    Text("Body: \(Int(session.physiologicalScore))")
+                    Text("Body Score: \(Int(session.physiologicalScore))")
                 }
                 .font(.caption)
                 .foregroundColor(colorForRating(session.physiologicalScore))
                 
                 Spacer()
-                
+                /*
                 if session.discrepancy > 20 {
                     Text("False Alarm")
                         .font(.caption2)
@@ -149,14 +183,12 @@ struct SessionRow: View {
                         .background(Color.green.opacity(0.2))
                         .foregroundColor(.green)
                         .cornerRadius(4)
-                }
+                }*/
             }
         }
     }
     
-    func colorForRating(_ val: Double) -> Color {
-        return val > 70 ? .red : (val > 40 ? .orange : .blue)
-    }
+    
     
     func formatDuration(_ interval: TimeInterval) -> String {
         let formatter = DateComponentsFormatter()

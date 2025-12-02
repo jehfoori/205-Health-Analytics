@@ -55,7 +55,7 @@ struct SessionDetailView: View {
                 
                 // 3. Stats Grid
                 HStack {
-                    StatBox(label: "Mind (SUDS)", value: "\(Int(session.subjectiveRating))")
+                    StatBox(label: "Mind Score (SUDS)", value: "\(Int(session.subjectiveRating))")
                     Divider()
                     StatBox(label: "Body Score", value: "\(Int(session.physiologicalScore))")
                 }
