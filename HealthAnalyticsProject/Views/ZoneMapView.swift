@@ -169,6 +169,14 @@ struct ZoneMapView: View {
                 .disabled(!isWithinAllowedRadius(of: zone))
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+                Button(role: .destructive) {
+                            dataStore.deleteZone(zone)   // cascades: deletes sessions too
+                            selectedZone = nil
+                        } label: {
+                            Label("Delete this location", systemImage: "trash")
+                        }
+                        .padding(.top, 8)
+                        
             }
             .presentationDetents([.medium])
         }

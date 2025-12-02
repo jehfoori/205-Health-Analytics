@@ -22,6 +22,7 @@ struct HistoryView: View {
                     }
                     .padding()
                 } else {
+                    // Wrap the ForEach so we can attach .onDelete to it
                     ForEach(zoneStore.zones) { zone in
                         NavigationLink(destination: ZoneDetailView(zone: zone)) {
                             HStack {
@@ -36,13 +37,31 @@ struct HistoryView: View {
                             }
                             .padding(.vertical, 4)
                         }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    // find the index and reuse your existing deleteZone(at:)
+                                    if let index = zoneStore.zones.firstIndex(where: { $0.id == zone.id }) {
+                                        zoneStore.deleteZone(at: IndexSet(integer: index))
+                                    }
+                                } label: {
+                                    Image(systemName: "trash")    // 👈 icon-only
+                                }
+                            }
                     }
+                    // This enables swipe-to-delete & Edit mode delete for zones
+                    .onDelete(perform: zoneStore.deleteZone)
+                    
                 }
             }
             .navigationTitle("Your Progress")
+            .toolbar {
+                // Optional: standard Edit button to show delete controls
+                EditButton()
+            }
         }
     }
 }
+
 
 // The Details: A list of every time you visited this zone
 struct ZoneDetailView: View {
@@ -94,6 +113,13 @@ struct ZoneDetailView: View {
                         NavigationLink(destination: SessionDetailView(session: session)) {
                             SessionRow(session: session)
                                 .padding(.vertical, 4)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                sessionStore.deleteSession(session)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
                     }
                 }
