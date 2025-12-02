@@ -38,7 +38,7 @@ struct PostSessionView: View {
                         .accentColor(colorForRating(subjectiveRating))
                         .padding()
                     
-                    Text("SUDS Score (Subjective Units of Distress)")
+                    Text("Subjective Units of Distress (SUDS)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
@@ -96,7 +96,7 @@ struct PostSessionView: View {
                             
                             // 3. The Journal
                             VStack(alignment: .leading) {
-                                Text("Safety Behavior Check")
+                                Text("Journal")
                                     .font(.headline)
                                 
                                 Text("What did you do to cope? (e.g. checked phone, held breath)")
